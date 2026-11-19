@@ -322,6 +322,20 @@ summary:focus-visible {
   bottom: -6px;
 }
 
+.ocr-text {
+  margin: 8px 0 0;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
 /* ---------- status / notes ---------- */
 
 .status {

@@ -96,10 +96,16 @@ export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => v
     const sw = Math.max(1, Math.round(r.w * scale));
     const sh = Math.max(1, Math.round(r.h * scale));
 
+    const pad = Math.round(Math.min(sw, sh) * 0.03);
+    const px = Math.max(0, sx - pad);
+    const py = Math.max(0, sy - pad);
+    const pw = Math.min(cv.width - px, sw + pad * 2);
+    const ph = Math.min(cv.height - py, sh + pad * 2);
+
     const out = document.createElement("canvas");
-    out.width = sw;
-    out.height = sh;
-    out.getContext("2d")?.drawImage(cv, sx, sy, sw, sh, 0, 0, sw, sh);
+    out.width = pw;
+    out.height = ph;
+    out.getContext("2d")?.drawImage(cv, px, py, pw, ph, 0, 0, pw, ph);
     out.toBlob(
       (blob) => {
         if (!blob) return;

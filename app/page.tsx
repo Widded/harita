@@ -38,6 +38,7 @@ export default function Page() {
   const [problems, setProblems] = useState<string[]>([]);
   const [busy, setBusy] = useState<"ocr" | "ai" | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [ocrText, setOcrText] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
   const [selCol, setSelCol] = useState<number | null>(null);
@@ -50,7 +51,8 @@ export default function Page() {
     setResult(null);
     try {
       const { readTable } = await import("@/lib/ocr");
-      const points = await readTable(next);
+      const { points, text } = await readTable(next);
+      setOcrText(text);
       if (points.length === 0) throw new Error("Tabloda satır bulunamadı. Kırpımı tabloya daha yakın seçip tekrar dene.");
       setDraft(points.map((p) => ({ no: p.no, y: p.y.toFixed(2), x: p.x.toFixed(2), suspect: p.suspect })));
       const bad = points.filter((p) => p.suspect).length;
@@ -244,6 +246,13 @@ export default function Page() {
                 AI ile tekrar oku
               </button>
             </div>
+
+            {ocrText && (
+              <details>
+                <summary>OCR metnini göster ({draft.length} satır okundu)</summary>
+                <pre className="ocr-text">{ocrText}</pre>
+              </details>
+            )}
           </section>
         )}
 
