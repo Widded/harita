@@ -11,6 +11,28 @@ type Result = { durulan: string; rows: Row[]; totalY: number; totalX: number };
 
 const NUM_COLS = new Set([5, 6, 7, 8, 11, 12]);
 
+/** Panoya kopyalar; API reddederse eski yönteme düşer. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
 export default function Page() {
   const [draft, setDraft] = useState<Draft[]>([]);
   const [problems, setProblems] = useState<string[]>([]);
@@ -18,6 +40,8 @@ export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selCol, setSelCol] = useState<number | null>(null);
+  const [colCopied, setColCopied] = useState(false);
 
   async function onImage(next: File) {
     setFile(next);
@@ -87,13 +111,30 @@ export default function Page() {
     }
     setProblems([]);
     setResult(buildRows(points));
+    setSelCol(null);
   }
 
   async function onCopy() {
     if (!result) return;
-    await navigator.clipboard.writeText(toTsv(result.rows, result.totalY, result.totalX));
+    const ok = await copyText(toTsv(result.rows, result.totalY, result.totalX));
+    if (!ok) {
+      setProblems(["Panoya kopyalanamadı."]);
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function copyColumn() {
+    if (selCol === null || !result) return;
+    const lines = grid.slice(1, -1).map((r) => r[selCol] ?? "");
+    const ok = await copyText(lines.join("\n"));
+    if (!ok) {
+      setProblems(["Panoya kopyalanamadı."]);
+      return;
+    }
+    setColCopied(true);
+    setTimeout(() => setColCopied(false), 1500);
   }
 
   const grid = result ? toGrid(result.rows, result.totalY, result.totalX) : [];
@@ -213,6 +254,9 @@ export default function Page() {
                 <span className="step">3</span> Çizelge
               </h2>
               <div className="actions tool">
+                <button className="ghost" onClick={copyColumn} disabled={selCol === null}>
+                  {colCopied ? "Sütun kopyalandı" : selCol === null ? "Sütun seç" : "Sütunu kopyala"}
+                </button>
                 <button onClick={onCopy}>{copied ? "Kopyalandı" : "Kopyala"}</button>
                 <button className="ghost" onClick={() => void downloadXlsx(result.rows, result.totalY, result.totalX)}>
                   Excel indir
@@ -227,8 +271,19 @@ export default function Page() {
                 <thead>
                   <tr>
                     {grid[0].map((h, i) => (
-                      <th key={i} className={NUM_COLS.has(i) ? "num" : undefined} scope="col">
-                        {h}
+                      <th key={i} scope="col" className={`${NUM_COLS.has(i) ? "num" : ""}${selCol === i ? " selected" : ""}`}>
+                        <button
+                          type="button"
+                          className="th-btn"
+                          aria-pressed={selCol === i}
+                          title="Sütunu seç"
+                          onClick={() => {
+                            setSelCol(selCol === i ? null : i);
+                            setColCopied(false);
+                          }}
+                        >
+                          {h}
+                        </button>
                       </th>
                     ))}
                   </tr>
@@ -237,7 +292,7 @@ export default function Page() {
                   {grid.slice(1).map((row, i) => (
                     <tr key={i} className={i === grid.length - 2 ? "total" : undefined}>
                       {row.map((c, j) => (
-                        <td key={j} className={NUM_COLS.has(j) ? "num" : undefined}>
+                        <td key={j} className={`${NUM_COLS.has(j) ? "num" : ""}${selCol === j ? " selected" : ""}`}>
                           {c}
                         </td>
                       ))}

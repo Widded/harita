@@ -410,6 +410,45 @@ tr.suspect td {
   box-shadow: inset 3px 0 0 var(--warn-line);
 }
 
+table.result th {
+  padding: 0;
+}
+
+.th-btn {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 6px 9px;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  text-align: inherit;
+  box-sizing: border-box;
+}
+
+.th-btn:hover {
+  background: var(--primary-soft);
+}
+
+th.selected {
+  background: var(--primary);
+  color: #fff;
+}
+
+th.selected .th-btn:hover {
+  background: var(--primary-2);
+}
+
+td.selected {
+  background: #e6f4f1;
+}
+
+tbody tr:hover td.selected {
+  background: #d9efea;
+}
+
 tr.total td {
   font-weight: 700;
   background: #f1f5f9;
