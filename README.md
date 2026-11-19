@@ -26,9 +26,13 @@ butonu Groq kullanır ve `GROQ_API_KEY` ister.
 npm test
 ```
 
-## Yayın (Vercel)
+## Yayın (Netlify)
 
-Projeyi içe aktar, `GROQ_API_KEY` ortam değişkenini ekle. Başka ayar yok.
+Canlı: https://kadastro-harita.netlify.app
+
+`main`'e push → GitHub Actions build alır ve Netlify'a deploy eder
+(`.github/workflows/netlify.yml`). Gerekli secret'lar: `NETLIFY_AUTH_TOKEN`,
+`NETLIFY_SITE_ID`. Ortam değişkeni: `GROQ_API_KEY`.
 
 ## Notlar
 
