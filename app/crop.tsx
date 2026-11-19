@@ -1,44 +1,113 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { estimateSkew, orientation, tableBox, toGray, type Box } from "@/lib/detect";
 
 type Rect = { x: number; y: number; w: number; h: number };
 
 export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => void }) {
   const [src, setSrc] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [auto, setAuto] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const skewRef = useRef(0);
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
 
-  function draw(nextRotation = rotation) {
+  function draw(nextRotation = rotation, skew = skewRef.current) {
     const img = imgRef.current;
     const cv = canvasRef.current;
     if (!img || !cv) return;
     const swap = nextRotation % 180 !== 0;
-    cv.width = swap ? img.naturalHeight : img.naturalWidth;
-    cv.height = swap ? img.naturalWidth : img.naturalHeight;
+    const bw = swap ? img.naturalHeight : img.naturalWidth;
+    const bh = swap ? img.naturalWidth : img.naturalHeight;
+    const angle = ((nextRotation + skew) * Math.PI) / 180;
+    const w = Math.round(Math.abs(bw * Math.cos(angle)) + Math.abs(bh * Math.sin(angle)));
+    const h = Math.round(Math.abs(bw * Math.sin(angle)) + Math.abs(bh * Math.cos(angle)));
+    cv.width = w;
+    cv.height = h;
     const ctx = cv.getContext("2d");
     if (!ctx) return;
-    ctx.translate(cv.width / 2, cv.height / 2);
-    ctx.rotate((nextRotation * Math.PI) / 180);
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(angle);
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
   }
 
   function onFile(file: File | undefined | null) {
     if (!file) return;
     setRect(null);
+    setAuto(false);
     setRotation(0);
+    skewRef.current = 0;
     const url = URL.createObjectURL(file);
     setSrc(url);
     const img = new Image();
     img.onload = () => {
       imgRef.current = img;
       draw(0);
+      detect(0, 0);
     };
     img.src = url;
+  }
+
+  /** Tabloyu bulur; gerekirse fotoğrafı 90° çevirip eğikliğini düzeltir. */
+  function detect(rot: number, stage: number) {
+    const cv = canvasRef.current;
+    if (!cv || !cv.width) return;
+    const scale = Math.min(1, 640 / Math.max(cv.width, cv.height));
+    const sw = Math.max(1, Math.round(cv.width * scale));
+    const sh = Math.max(1, Math.round(cv.height * scale));
+    const small = document.createElement("canvas");
+    small.width = sw;
+    small.height = sh;
+    const ctx = small.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    ctx.drawImage(cv, 0, 0, sw, sh);
+    const gray = toGray(ctx.getImageData(0, 0, sw, sh).data, sw, sh);
+
+    if (stage === 0 && orientation(gray) === "v") {
+      const next = (rot + 90) % 360;
+      setRotation(next);
+      draw(next);
+      detect(next, 1);
+      return;
+    }
+
+    if (stage <= 1) {
+      const skew = estimateSkew(gray);
+      if (Math.abs(skew) >= 1) {
+        skewRef.current = skew;
+        draw(rot, skew);
+        detect(rot, 2);
+        return;
+      }
+    }
+
+    const box = tableBox(gray);
+    if (box) applyBox(box);
+  }
+
+  /** Normalize kutuyu ekran koordinatına çevirir (yerleşim hazır olana kadar bekler). */
+  function applyBox(box: Box, tries = 0) {
+    requestAnimationFrame(() => {
+      const el = canvasRef.current;
+      if (!el || el.clientWidth === 0) {
+        if (tries < 20) applyBox(box, tries + 1);
+        return;
+      }
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const pad = 0.01;
+      setRect({
+        x: Math.max(0, box.x - pad) * w,
+        y: Math.max(0, box.y - pad) * h,
+        w: Math.min(1, box.w + pad * 2) * w,
+        h: Math.min(1, box.h + pad * 2) * h,
+      });
+      setAuto(true);
+    });
   }
 
   function rotate() {
@@ -141,7 +210,11 @@ export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => v
 
       {src && (
         <>
-          <p className="muted">Tabloyu parmağınla veya fareyle seç. Seçmezsen tüm fotoğraf okunur.</p>
+          <p className="muted">
+            {auto
+              ? "Tablo otomatik seçildi. Gerekirse kenarlardan düzelt, sonra oku."
+              : "Tabloyu parmağınla veya fareyle seç. Seçmezsen tüm fotoğraf okunur."}
+          </p>
           <div className="crop-stage">
             <div className="crop-box" ref={boxRef} onPointerDown={down} onPointerMove={move} onPointerUp={up}>
               <canvas ref={canvasRef} />

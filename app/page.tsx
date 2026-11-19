@@ -3,7 +3,8 @@
 import { useState } from "react";
 import CropUpload from "./crop";
 import { buildRows, parseNumber, type Point, type Row } from "@/lib/points";
-import { downloadXlsx, toGrid, toTsv } from "@/lib/xlsx";
+import { downloadXlsx } from "@/lib/xlsx";
+import { toGrid, toTsv } from "@/lib/grid";
 
 type Draft = { no: string; y: string; x: string; suspect?: boolean };
 type Result = { durulan: string; rows: Row[]; totalY: number; totalX: number };
@@ -213,7 +214,7 @@ export default function Page() {
               </h2>
               <div className="actions tool">
                 <button onClick={onCopy}>{copied ? "Kopyalandı" : "Kopyala"}</button>
-                <button className="ghost" onClick={() => downloadXlsx(result.rows, result.totalY, result.totalX)}>
+                <button className="ghost" onClick={() => void downloadXlsx(result.rows, result.totalY, result.totalX)}>
                   Excel indir
                 </button>
               </div>

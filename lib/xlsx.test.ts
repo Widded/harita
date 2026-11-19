@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildRows } from "./points";
-import { toGrid } from "./xlsx";
+import { toGrid } from "./grid";
 
 describe("toGrid", () => {
   it("durulan noktayı BAK. NOK sütununa tekrar yazmaz", () => {
