@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Kişisel belge fotoğrafları (kadastro evrakı) — repoya girmesin
+1.jpeg
+2.jpeg

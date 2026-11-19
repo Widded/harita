@@ -1,0 +1,145 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f4f5f7;
+  color: #1c2330;
+}
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+
+h2 {
+  font-size: 15px;
+  margin: 18px 0 8px;
+}
+
+.muted {
+  color: #63708a;
+  font-size: 13px;
+  margin: 0;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #dde1e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.card.warn {
+  background: #fff8e6;
+  border-color: #e8c97a;
+  color: #6b4d00;
+  font-size: 13px;
+}
+
+input[type="file"] {
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid #2f6fed;
+  background: #2f6fed;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button.ghost {
+  background: #fff;
+  color: #2f6fed;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  border: 1px solid #dde1e8;
+  padding: 4px 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  background: #eef2f9;
+  font-weight: 600;
+}
+
+table.result th {
+  font-size: 11px;
+}
+
+tr.total td {
+  font-weight: 700;
+  background: #f7f9fc;
+}
+
+tr.suspect td {
+  background: #fff6d9;
+}
+
+td input {
+  width: 110px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  padding: 4px;
+  border: 1px solid #c8cfdb;
+  border-radius: 4px;
+}
+
+.crop-box {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 10px;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-box canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.crop-sel {
+  position: absolute;
+  border: 2px dashed #2f6fed;
+  background: rgba(47, 111, 237, 0.12);
+  pointer-events: none;
+}

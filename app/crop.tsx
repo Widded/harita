@@ -1,0 +1,144 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => void }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [rect, setRect] = useState<Rect | null>(null);
+  const [rotation, setRotation] = useState(0);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+
+  function draw(nextRotation = rotation) {
+    const img = imgRef.current;
+    const cv = canvasRef.current;
+    if (!img || !cv) return;
+    const swap = nextRotation % 180 !== 0;
+    cv.width = swap ? img.naturalHeight : img.naturalWidth;
+    cv.height = swap ? img.naturalWidth : img.naturalHeight;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.translate(cv.width / 2, cv.height / 2);
+    ctx.rotate((nextRotation * Math.PI) / 180);
+    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+  }
+
+  function onFile(file: File | undefined) {
+    if (!file) return;
+    setRect(null);
+    setRotation(0);
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    const img = new Image();
+    img.onload = () => {
+      imgRef.current = img;
+      draw(0);
+    };
+    img.src = url;
+  }
+
+  function rotate() {
+    const next = (rotation + 90) % 360;
+    setRotation(next);
+    setRect(null);
+    draw(next);
+  }
+
+  function point(e: React.PointerEvent) {
+    const box = boxRef.current!.getBoundingClientRect();
+    return {
+      x: Math.min(Math.max(e.clientX - box.left, 0), box.width),
+      y: Math.min(Math.max(e.clientY - box.top, 0), box.height),
+    };
+  }
+
+  function down(e: React.PointerEvent) {
+    if (!src) return;
+    const p = point(e);
+    start.current = p;
+    setRect({ x: p.x, y: p.y, w: 0, h: 0 });
+    try {
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+    } catch {
+      // sentetik olaylarda pointer yakalama olmayabilir
+    }
+  }
+
+  function move(e: React.PointerEvent) {
+    if (!start.current) return;
+    const p = point(e);
+    const s = start.current;
+    setRect({
+      x: Math.min(s.x, p.x),
+      y: Math.min(s.y, p.y),
+      w: Math.abs(p.x - s.x),
+      h: Math.abs(p.y - s.y),
+    });
+  }
+
+  function up() {
+    if (rect && (rect.w < 12 || rect.h < 12)) setRect(null);
+    start.current = null;
+  }
+
+  function confirm() {
+    const cv = canvasRef.current;
+    const box = boxRef.current;
+    if (!cv || !box) return;
+    const scale = cv.width / box.getBoundingClientRect().width;
+    const r = rect ?? { x: 0, y: 0, w: box.clientWidth, h: box.clientHeight };
+    const sx = Math.round(r.x * scale);
+    const sy = Math.round(r.y * scale);
+    const sw = Math.max(1, Math.round(r.w * scale));
+    const sh = Math.max(1, Math.round(r.h * scale));
+
+    const out = document.createElement("canvas");
+    out.width = sw;
+    out.height = sh;
+    out.getContext("2d")?.drawImage(cv, sx, sy, sw, sh, 0, 0, sw, sh);
+    out.toBlob(
+      (blob) => {
+        if (!blob) return;
+        onConfirm(new File([blob], "kirpim.jpg", { type: "image/jpeg" }));
+        setSrc(null);
+        setRect(null);
+      },
+      "image/jpeg",
+      0.95,
+    );
+  }
+
+  return (
+    <div>
+      <input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
+
+      {src && (
+        <>
+          <p className="muted">Tabloyu parmağınla/fareyle seç. Seçmezsen tüm fotoğraf okunur.</p>
+          <div className="crop-box" ref={boxRef} onPointerDown={down} onPointerMove={move} onPointerUp={up}>
+            <canvas ref={canvasRef} />
+            {rect && (
+              <div
+                className="crop-sel"
+                style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
+              />
+            )}
+          </div>
+          <div className="actions">
+            <button className="ghost" onClick={rotate}>
+              Döndür
+            </button>
+            <button className="ghost" onClick={() => setRect(null)} disabled={!rect}>
+              Seçimi temizle
+            </button>
+            <button onClick={confirm}>Bu kısmı oku</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
