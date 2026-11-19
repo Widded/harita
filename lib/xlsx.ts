@@ -1,4 +1,3 @@
-import ExcelJS from "exceljs";
 import type { Row } from "./points";
 import { HEADERS } from "./grid";
 
@@ -11,6 +10,7 @@ const TOTAL_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColo
 const WIDTHS = [10, 10, 11, 10, 12, 13, 11, 13, 11, 15, 11, 10, 10, 10];
 
 export async function downloadXlsx(rows: Row[], totalY: number, totalX: number) {
+  const { default: ExcelJS } = await import("exceljs");
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Kontrol Ölçü", {
     pageSetup: {
