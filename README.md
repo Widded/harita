@@ -28,7 +28,7 @@ npm test
 
 ## Yayın (Netlify)
 
-Canlı: https://kadastro-harita.netlify.app
+Canlı: https://kadastroh.netlify.app
 
 `main`'e push → GitHub Actions build alır ve Netlify'a deploy eder
 (`.github/workflows/netlify.yml`). Gerekli secret'lar: `NETLIFY_AUTH_TOKEN`,
