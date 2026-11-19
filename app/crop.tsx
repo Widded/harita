@@ -27,7 +27,7 @@ export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => v
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
   }
 
-  function onFile(file: File | undefined) {
+  function onFile(file: File | undefined | null) {
     if (!file) return;
     setRect(null);
     setRotation(0);
@@ -114,19 +114,39 @@ export default function CropUpload({ onConfirm }: { onConfirm: (file: File) => v
 
   return (
     <div>
-      <input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
+      {!src && (
+        <label
+          className="dropzone"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            onFile(e.dataTransfer.files?.[0]);
+          }}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            className="visually-hidden"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 16V4" />
+            <path d="m7 9 5-5 5 5" />
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+          <span className="dropzone-title">Fotoğraf seç veya sürükle</span>
+          <span className="dropzone-hint">Yükleme sonrası tablo kısmını seçebilirsin · JPG, PNG</span>
+        </label>
+      )}
 
       {src && (
         <>
-          <p className="muted">Tabloyu parmağınla/fareyle seç. Seçmezsen tüm fotoğraf okunur.</p>
-          <div className="crop-box" ref={boxRef} onPointerDown={down} onPointerMove={move} onPointerUp={up}>
-            <canvas ref={canvasRef} />
-            {rect && (
-              <div
-                className="crop-sel"
-                style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
-              />
-            )}
+          <p className="muted">Tabloyu parmağınla veya fareyle seç. Seçmezsen tüm fotoğraf okunur.</p>
+          <div className="crop-stage">
+            <div className="crop-box" ref={boxRef} onPointerDown={down} onPointerMove={move} onPointerUp={up}>
+              <canvas ref={canvasRef} />
+              {rect && <div className="crop-sel" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }} />}
+            </div>
           </div>
           <div className="actions">
             <button className="ghost" onClick={rotate}>
